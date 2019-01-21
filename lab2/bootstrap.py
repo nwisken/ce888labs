@@ -8,6 +8,18 @@ import numpy as np
 
 def boostrap(sample, sample_size, iterations):
     # <---INSERT YOUR CODE HERE--->
+    new_samples_index = np.random.randint(0,sample_size, (iterations,sample_size))
+    iteration_means = np.zeros(iterations)
+    new_samples = sample[new_samples_index]
+    data_mean = np.mean(new_samples)
+
+    for iteration in range(iterations):
+        iteration_data = new_samples[iteration, :]
+        iteration_mean = np.mean(iteration_data)
+        iteration_means[iteration] = iteration_mean
+
+    lower = np.percentile(iteration_means,5)
+    upper = np.percentile(iteration_means, 95)
     return data_mean, lower, upper
 
 
