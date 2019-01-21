@@ -5,6 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+import bootstrap
 
 VEHICLE_FILE = "vehicles.csv"
 
@@ -33,6 +34,7 @@ if __name__ == "__main__":
     vehicle_scatter.savefig("vehiclescatter.pdf", bbox_inches='tight')
 
     data_new_fleet = df.values.T[1]
+    data_current_fleet = df.values.T[0]
 
     print((("Mean: %f") % (np.mean(data_new_fleet))))
     print((("Median: %f") % (np.median(data_new_fleet))))
@@ -49,3 +51,11 @@ if __name__ == "__main__":
 
     vehicle_histogram.savefig("vehiclehistogram.png", bbox_inches='tight')
     vehicle_histogram.savefig("vehiclehistogram.pdf", bbox_inches='tight')
+
+    mean_current_fleet = np.mean(data_current_fleet)
+    mean_new_fleet = np.mean(data_new_fleet)
+    boot_current = bootstrap.boostrap(data_current_fleet,data_current_fleet.shape[0],1000)
+    boot_new = bootstrap.boostrap(data_new_fleet, data_current_fleet.shape[0], 1000)
+
+    print("Current Fleet: Mean:{} Upper: {} : {}".format(mean_current_fleet, boot_current[1], boot_current[2]))
+    print("New Fleet: Mean:{} Upper: {} : {}".format(mean_new_fleet, boot_new[1], boot_new[2]))
