@@ -57,5 +57,5 @@ if __name__ == "__main__":
     boot_current = bootstrap.boostrap(data_current_fleet,data_current_fleet.shape[0],1000)
     boot_new = bootstrap.boostrap(data_new_fleet, data_current_fleet.shape[0], 1000)
 
-    print("Current Fleet: Mean:{} Upper: {} : {}".format(mean_current_fleet, boot_current[1], boot_current[2]))
-    print("New Fleet: Mean:{} Upper: {} : {}".format(mean_new_fleet, boot_new[1], boot_new[2]))
+    print("Current Fleet: Mean:{} Lower: {} Upper: {}".format(mean_current_fleet, boot_current[1], boot_current[2]))
+    print("New Fleet: Mean:{} Lower: {} Upper: {}".format(mean_new_fleet, boot_new[1], boot_new[2]))
