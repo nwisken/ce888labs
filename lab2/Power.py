@@ -18,7 +18,7 @@ def power(sample1, sample2, reps, size, alpha):
         s2_mean = np.mean(s2)
         perm = s2_mean-s1_mean
         if perm > obsv:
-            times_greater+=1
+            times_greater +=0.1
 
 
     p = times_greater/reps
