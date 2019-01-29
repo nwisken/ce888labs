@@ -10,10 +10,10 @@ print(bank.shape)
 
 
 
-data = pd.get_dummies(bank, columns=["job", "marital", "education", "default", "housing", "loan", "contact",
-                                           "month", "day_of_week", "campaign", "pdays", "previous", "poutcome", "y"])
+#data = pd.get_dummies(bank, columns=["job", "marital", "education", "default", "housing", "loan", "contact",
+                                          # "month", "day_of_week", "campaign", "pdays", "previous", "poutcome", "y"])
 
-# data = pd.get_dummies(bank)
+data = pd.get_dummies(bank)
 data.pop("y_no")
 data.pop("duration")
 sns.distplot(data["y_yes"])
@@ -68,6 +68,6 @@ print(indices)
 # Print the feature ranking
 print("Feature ranking:")
 
-for f in range(len(data.columns)):
-    print("%d. %s (%f)" % (f + 1, data[indices[f]],  importances[indices[f]]))
+for f in range(len(train_data.columns)):
+    print("%d. %s (%f)" % (f + 1, train_data.columns.values[indices[f]],  importances[indices[f]]))
 print("DONE")
