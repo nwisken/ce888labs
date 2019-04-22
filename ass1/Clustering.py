@@ -86,7 +86,8 @@ def cluster_autoencoder_simple(train_data, train_label, num_classes, title, num_
     autoencoder.summary()
 
 
-    autoencoder.compile(optimizer="adam", loss="binary_crossentropy")
+    #autoencoder.compile(optimizer="adam", loss="binary_crossentropy")
+    autoencoder.compile(optimizer="adam", loss="mse")
     history = autoencoder.fit(train_data, train_data, batch_size=batch_size, epochs=num_epochs,
                               validation_data=(val_data, val_data), verbose=0, shuffle=True)
     plot_history(history, title)
@@ -168,12 +169,14 @@ def cluster_PCA(train_data, train_label, num_classes, components):
     pca = PCA(components)
     pca.fit(train_data)
 
+    """
     plt.figure()
     plt.plot(np.cumsum(pca.explained_variance_ratio_))
     plt.xlabel('Number of Components')
     plt.ylabel('Variance (%)')  # for each component
     plt.title('Dataset Explained Variance')
     plt.show()
+    """
 
     train_data_pca = pca.transform(train_data)
     clusters = KMeans(n_clusters=num_classes, random_state=RANDOM_STATE).fit(train_data_pca)
@@ -210,31 +213,44 @@ digit = pd.read_csv(DIGIT_PATH)
 digit_data = digit.drop(digit.columns[0], axis=1)
 digit_labels = digit[digit.columns[0]]
 
-cnae_data = MinMaxScaler().fit_transform(cnae_data)
-digit_data = MinMaxScaler().fit_transform(digit_data)
-har_data = MinMaxScaler().fit_transform(har_data)
-
+# Cluster dataset using original none-scaled features
 cnae_none = cluster_none(cnae_data, cnae_labels, NUM_CNAE)
 har_none = cluster_none(har_data, har_labels, NUM_HAR)
 digit_none = cluster_none(digit_data, digit_labels, NUM_DIGIT)
 
+# cluster using simple autoencoder
 digit_simple= cluster_autoencoder_simple(digit_data, digit_labels, 10,"MNIST digit",50)
 cnae_simple = cluster_autoencoder_simple(cnae_data, cnae_labels, 9,"CNAE-9", 50)
 har_simple = cluster_autoencoder_simple(har_data, har_labels, 6,"Human activity",50)
 
-#digit_results = cluster_autoencoder(digit_data, digit_labels, 10,"MNIST digit",30)
-#cnae_results = cluster_autoencoder(cnae_data, cnae_labels, 9,"CNAE-9",4)
-#har_results = cluster_autoencoder(har_data, har_labels, 6,"Human activity",5)
+# cluster using deep autoenocder
+digit_results = cluster_autoencoder(digit_data, digit_labels, 10,"MNIST digit",30)
+cnae_results = cluster_autoencoder(cnae_data, cnae_labels, 9,"CNAE-9",4)
+har_results = cluster_autoencoder(har_data, har_labels, 6,"Human activity",5)
 
-#digit_conv = cluster_conv(digit_data, digit_labels, 10,"MNIST digit",50)
-#cnae_conv= cluster_conv(cnae_data, cnae_labels, 9,"CNAE-9",50)
-#har_conv = cluster_conv(har_data, har_labels, 6,"Human activity",50)
-
-"""
+# cluster using PCA Features
 digit_PCA = cluster_PCA(digit_data, digit_labels, 10, 130)
 cnae_PCA = cluster_PCA(cnae_data, cnae_labels, 9, 250)
 har_PCA = cluster_PCA(har_data, har_labels, 6, 60)
+
 """
+cnae_data_mm = MinMaxScaler().fit_transform(cnae_data)
+digit_data_mm = MinMaxScaler().fit_transform(digit_data)
+har_data_mm = MinMaxScaler().fit_transform(har_data)
+
+cnae_none_mm = cluster_none(cnae_data_mm, cnae_labels, NUM_CNAE)
+har_none_mm = cluster_none(har_data_mm, har_labels, NUM_HAR)
+digit_none_mm = cluster_none(digit_data_mm, digit_labels, NUM_DIGIT)
+
+digit_simple_mm= cluster_autoencoder_simple(digit_data_mm, digit_labels, 10,"MNIST digit",50)
+cnae_simple_mm = cluster_autoencoder_simple(cnae_data_mm, cnae_labels, 9,"CNAE-9", 50)
+har_simple_mm = cluster_autoencoder_simple(har_data_mm, har_labels, 6,"Human activity",50)
+
+digit_PCA_mm = cluster_PCA(digit_data_mm, digit_labels, 10, 130)
+cnae_PCA_mm = cluster_PCA(cnae_data_mm, cnae_labels, 9, 250)
+har_PCA_mm = cluster_PCA(har_data_mm, har_labels, 6, 60)
+"""
+
 
 print("CNAE none", cnae_none)
 print("HAR none", har_none)
@@ -244,16 +260,35 @@ print("CNAE simple", cnae_simple)
 print("HAR simple", har_simple)
 print("Digit simple", digit_simple,'\n')
 
-#print("CNAE with autoencoder", cnae_results)
+print("CNAE with PCA ", cnae_PCA)  # 120- 30
+print("HAR with PCA", har_PCA)  # 230-50
+print("Digit with PCA", digit_PCA)  # 60 pca
+
+print("CNAE with autoencoder", cnae_results)
 #print("HAR with autoencoder", har_results)
 #print("Digit with autoencoder", digit_results,'\n')
+
+"""
+print("CNAE none mm", cnae_none_mm)
+print("HAR none mm", har_none_mm)
+print("Digit none mm", digit_none_mm, '\n')
+
+print("CNAE simple mm", cnae_simple_mm)
+print("HAR simple mm", har_simple_mm)
+print("Digit simple mm", digit_simple_mm,'\n')
+
+print("CNAE with PCA MM", cnae_PCA_mm)  # 120- 30
+print("HAR with PCA MM", har_PCA_mm)  # 230-50
+print("Digit with PCA MM", digit_PCA_mm)  # 60 pca
+
+"""
+
+# cluster using
+#digit_conv = cluster_conv(digit_data, digit_labels, 10,"MNIST digit",50)
+#cnae_conv= cluster_conv(cnae_data, cnae_labels, 9,"CNAE-9",50)
+#har_conv = cluster_conv(har_data, har_labels, 6,"Human activity",50)
 
 #print("CNAE with conv", cnae_conv)
 #print("HAR with conv", har_conv)
 #print("Digit with conv", digit_conv,'\n')
 
-"""
-print("CNAE with PCA", cnae_PCA)  # 120- 30
-print("HAR with PCA", har_PCA)  # 230-50
-print("Digit with PCA", digit_PCA)  # 60 pca
-"""
