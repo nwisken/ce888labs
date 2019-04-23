@@ -20,7 +20,7 @@ def plot_history(history, title):
     """
     loss = history.history['loss']
     val_loss = history.history['val_loss']
-    #x = range(NUM_EPOCHS)
+    # x = range(NUM_EPOCHS)
 
     plt.figure(figsize=(12, 5))
     plt.plot(loss, 'b', label='Training loss')
@@ -32,11 +32,7 @@ def plot_history(history, title):
 
 def cluster_autoencoder(train_data, train_label, num_classes, title, num_epochs):
     batch_size = 128
-    num_neurons_input = num_neurons_output = train_data.shape[1] # number features
-    # num_neurons_hl1 = 35
-    num_neurons_hl1 = 128
-    num_neurons_hl2 = 65
-    num_neurons_hl3 = 32
+    num_neurons_input = num_neurons_output = train_data.shape[1]  # number features
     train_data, val_data, train_label, val_label = train_test_split(train_data, train_label, test_size=0.1,
                                                                     random_state=RANDOM_STATE)
 
@@ -44,7 +40,7 @@ def cluster_autoencoder(train_data, train_label, num_classes, title, num_epochs)
     # Dense = NN network layer
     encoded = Dense(256, activation='relu')(input_shape)
     encoded = Dense(128, activation='relu')(encoded)
-    encoded = Dense(64, activation='softmax')(encoded)
+    encoded = Dense(64, activation='relu')(encoded)
 
     decoded = Dense(128, activation='relu')(encoded)
     decoded = Dense(256, activation='relu')(decoded)
@@ -61,18 +57,18 @@ def cluster_autoencoder(train_data, train_label, num_classes, title, num_epochs)
     encoder = Model(input_shape, encoded)
     encoded_data = encoder.predict(train_data)
 
-    cluster_preicdion = KMeans(n_clusters=num_classes, random_state=RANDOM_STATE).fit(encoded_data)
+    cluster_preicdion = KMeans(n_clusters=num_classes, random_state=RANDOM_STATE).fit_predict(encoded_data)
 
-    homo = homogeneity_score(train_label, cluster_preicdion.labels_)
-    comp = completeness_score(train_label, cluster_preicdion.labels_)
-    v = v_measure_score(train_label, cluster_preicdion.labels_)
-
+    homo = homogeneity_score(train_label, cluster_preicdion)
+    comp = completeness_score(train_label, cluster_preicdion)
+    v = v_measure_score(train_label, cluster_preicdion)
 
     return "homo: {} comp: {} v-Measure: {} ".format(homo, comp, v)
 
+
 def cluster_autoencoder_simple(train_data, train_label, num_classes, title, num_epochs):
     batch_size = 128
-    num_neurons_input = num_neurons_output = train_data.shape[1] # number features
+    num_neurons_input = num_neurons_output = train_data.shape[1]  # number features
     train_data, val_data, train_label, val_label = train_test_split(train_data, train_label, test_size=0.1,
                                                                     random_state=RANDOM_STATE)
 
@@ -85,9 +81,7 @@ def cluster_autoencoder_simple(train_data, train_label, num_classes, title, num_
     autoencoder = Model(input_shape, decoded)
     autoencoder.summary()
 
-
-    #autoencoder.compile(optimizer="adam", loss="binary_crossentropy")
-    autoencoder.compile(optimizer="adam", loss="mse")
+    autoencoder.compile(optimizer="adam", loss="binary_crossentropy")
     history = autoencoder.fit(train_data, train_data, batch_size=batch_size, epochs=num_epochs,
                               validation_data=(val_data, val_data), verbose=0, shuffle=True)
     plot_history(history, title)
@@ -95,73 +89,20 @@ def cluster_autoencoder_simple(train_data, train_label, num_classes, title, num_
     encoder = Model(input_shape, encoded)
     encoded_data = encoder.predict(train_data)
 
-    cluster_preicdion = KMeans(n_clusters=num_classes, random_state=RANDOM_STATE).fit(encoded_data)
+    cluster_preicdion = KMeans(n_clusters=num_classes, random_state=RANDOM_STATE).fit_predict(encoded_data)
 
-    homo = homogeneity_score(train_label, cluster_preicdion.labels_)
-    comp = completeness_score(train_label, cluster_preicdion.labels_)
-    v = v_measure_score(train_label, cluster_preicdion.labels_)
-
-
-    return "homo: {} comp: {} v-Measure: {} ".format(homo, comp, v)
-
-
-def cluster_conv(train_data, train_label, num_classes, title, num_epochs):
-    batch_size = 128
-    num_neurons_input = num_neurons_output = train_data.shape[1] # number features
-    # num_neurons_hl1 = 35
-    num_neurons_hl1 = 128
-    num_neurons_hl2 = 65
-    num_neurons_hl3 = 32
-    train_data, val_data, train_label, val_label = train_test_split(train_data, train_label, test_size=0.1,
-                                                                    random_state=RANDOM_STATE)
-
-    input_shape = Input(shape=(num_neurons_input,))
-    model = Sequential()
-    model.add(Conv1D(14, kernel_size=3, padding='same', activation='relu', input_shape=input_shape))
-    model.add(MaxPool1D((2, 2), padding='same'))
-    model.add(Dropout(0.2))
-    model.add(Conv1D(7, kernel_size=3, padding='same', activation='relu'))
-    model.add(MaxPool1D((2, 2), padding='same'))
-    model.add(Dropout(0.2))
-    model.add(Conv1D(7, kernel_size=3, padding='same', activation='relu'))
-    model.add(UpSampling1D((2, 2)))
-    model.add(Dropout(0.2))
-    model.add(Conv1D(14, kernel_size=3, padding='same', activation='relu'))
-    model.add(UpSampling1D((2, 2)))
-    model.add(Dropout(0.2))
-    model.add(Conv1D(1, kernel_size=3, padding='same', activation='relu'))
-
-    model.compile(optimizer='adam', loss="mse")
-    model.summary()
-
-
-
-    model.compile(optimizer="adam", loss="categorical_crossentropy")
-    history = model.fit(train_data, train_data, batch_size=batch_size, epochs=num_epochs,
-                              validation_data=(val_data, val_data), verbose=0)
-    plot_history(history, title)
-
-    encoder = K.function([model.layers[0].input], [model.layers[4].output])
-    encoded_data = encoder.predict(train_data)
-
-    cluster_preicdion = KMeans(n_clusters=num_classes, random_state=RANDOM_STATE).fit(encoded_data)
-    #one_hot_labels = to_categorical(train_label, num_classes=num_classes)
-
-    homo = homogeneity_score(train_label, cluster_preicdion.labels_)
-    comp = completeness_score(train_label, cluster_preicdion.labels_)
-    v = v_measure_score(train_label, cluster_preicdion.labels_)
-    #homo = homogeneity_score(one_hot_labels, cluster_preicdion.labels_)
-    #comp = completeness_score(one_hot_labels, cluster_preicdion.labels_)
-    #v = v_measure_score(train_label, cluster_preicdion.labels_)
+    homo = homogeneity_score(train_label, cluster_preicdion)
+    comp = completeness_score(train_label, cluster_preicdion)
+    v = v_measure_score(train_label, cluster_preicdion)
 
     return "homo: {} comp: {} v-Measure: {} ".format(homo, comp, v)
 
 
 def cluster_none(train_data, train_labels, num_classes):
-    clusters = KMeans(n_clusters=num_classes, random_state=RANDOM_STATE).fit(train_data)
-    homo = homogeneity_score(train_labels, clusters.labels_)
-    comp = completeness_score(train_labels, clusters.labels_)
-    v = v_measure_score(train_labels, clusters.labels_)
+    clusters = KMeans(n_clusters=num_classes, random_state=RANDOM_STATE).fit_predict(train_data)
+    homo = homogeneity_score(train_labels, clusters)
+    comp = completeness_score(train_labels, clusters)
+    v = v_measure_score(train_labels, clusters)
     return "homo: {} comp: {} v-Measure: {} ".format(homo, comp, v)
 
 
@@ -179,11 +120,11 @@ def cluster_PCA(train_data, train_label, num_classes, components):
     """
 
     train_data_pca = pca.transform(train_data)
-    clusters = KMeans(n_clusters=num_classes, random_state=RANDOM_STATE).fit(train_data_pca)
+    clusters = KMeans(n_clusters=num_classes, random_state=RANDOM_STATE).fit_predict(train_data_pca)
 
-    homo = homogeneity_score(train_label, clusters.labels_)
-    comp = completeness_score(train_label, clusters.labels_)
-    v = v_measure_score(train_label, clusters.labels_)
+    homo = homogeneity_score(train_label, clusters)
+    comp = completeness_score(train_label, clusters)
+    v = v_measure_score(train_label, clusters)
 
     return "homo: {} comp: {} v-Measure: {} ".format(homo, comp, v)
 
@@ -213,6 +154,7 @@ digit = pd.read_csv(DIGIT_PATH)
 digit_data = digit.drop(digit.columns[0], axis=1)
 digit_labels = digit[digit.columns[0]]
 
+"""
 # Cluster dataset using original none-scaled features
 cnae_none = cluster_none(cnae_data, cnae_labels, NUM_CNAE)
 har_none = cluster_none(har_data, har_labels, NUM_HAR)
@@ -232,26 +174,26 @@ har_results = cluster_autoencoder(har_data, har_labels, 6,"Human activity",5)
 digit_PCA = cluster_PCA(digit_data, digit_labels, 10, 130)
 cnae_PCA = cluster_PCA(cnae_data, cnae_labels, 9, 250)
 har_PCA = cluster_PCA(har_data, har_labels, 6, 60)
-
 """
+
 cnae_data_mm = MinMaxScaler().fit_transform(cnae_data)
 digit_data_mm = MinMaxScaler().fit_transform(digit_data)
 har_data_mm = MinMaxScaler().fit_transform(har_data)
-
+"""
 cnae_none_mm = cluster_none(cnae_data_mm, cnae_labels, NUM_CNAE)
 har_none_mm = cluster_none(har_data_mm, har_labels, NUM_HAR)
 digit_none_mm = cluster_none(digit_data_mm, digit_labels, NUM_DIGIT)
-
-digit_simple_mm= cluster_autoencoder_simple(digit_data_mm, digit_labels, 10,"MNIST digit",50)
-cnae_simple_mm = cluster_autoencoder_simple(cnae_data_mm, cnae_labels, 9,"CNAE-9", 50)
-har_simple_mm = cluster_autoencoder_simple(har_data_mm, har_labels, 6,"Human activity",50)
-
+"""
+digit_simple_mm = cluster_autoencoder_simple(digit_data_mm, digit_labels, 10, "MNIST digit", 20)
+cnae_simple_mm = cluster_autoencoder_simple(cnae_data_mm, cnae_labels, 9, "CNAE-9", 20)
+har_simple_mm = cluster_autoencoder_simple(har_data_mm, har_labels, 6, "Human activity", 20)
+""""
 digit_PCA_mm = cluster_PCA(digit_data_mm, digit_labels, 10, 130)
 cnae_PCA_mm = cluster_PCA(cnae_data_mm, cnae_labels, 9, 250)
 har_PCA_mm = cluster_PCA(har_data_mm, har_labels, 6, 60)
 """
 
-
+"""
 print("CNAE none", cnae_none)
 print("HAR none", har_none)
 print("Digit none", digit_none, '\n')
@@ -267,28 +209,16 @@ print("Digit with PCA", digit_PCA)  # 60 pca
 print("CNAE with autoencoder", cnae_results)
 #print("HAR with autoencoder", har_results)
 #print("Digit with autoencoder", digit_results,'\n')
-
 """
-print("CNAE none mm", cnae_none_mm)
-print("HAR none mm", har_none_mm)
-print("Digit none mm", digit_none_mm, '\n')
+
+# print("CNAE none mm", cnae_none_mm)
+# print("HAR none mm", har_none_mm)
+# print("Digit none mm", digit_none_mm, '\n')
 
 print("CNAE simple mm", cnae_simple_mm)
 print("HAR simple mm", har_simple_mm)
-print("Digit simple mm", digit_simple_mm,'\n')
+print("Digit simple mm", digit_simple_mm, '\n')
 
-print("CNAE with PCA MM", cnae_PCA_mm)  # 120- 30
-print("HAR with PCA MM", har_PCA_mm)  # 230-50
-print("Digit with PCA MM", digit_PCA_mm)  # 60 pca
-
-"""
-
-# cluster using
-#digit_conv = cluster_conv(digit_data, digit_labels, 10,"MNIST digit",50)
-#cnae_conv= cluster_conv(cnae_data, cnae_labels, 9,"CNAE-9",50)
-#har_conv = cluster_conv(har_data, har_labels, 6,"Human activity",50)
-
-#print("CNAE with conv", cnae_conv)
-#print("HAR with conv", har_conv)
-#print("Digit with conv", digit_conv,'\n')
-
+# print("CNAE with PCA MM", cnae_PCA_mm)  # 120- 30
+# print("HAR with PCA MM", har_PCA_mm)  # 230-50
+# print("Digit with PCA MM", digit_PCA_mm)  # 60 pca
