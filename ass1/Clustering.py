@@ -38,12 +38,12 @@ def cluster_autoencoder(train_data, train_label, num_classes, title, num_epochs)
 
     input_shape = Input(shape=(num_neurons_input,))
     # Dense = NN network layer
-    encoded = Dense(256, activation='relu')(input_shape)
-    encoded = Dense(128, activation='relu')(encoded)
-    encoded = Dense(64, activation='relu')(encoded)
+    encoded = Dense(128, activation='relu')(input_shape)
+    encoded = Dense(65, activation='relu')(encoded)
+    encoded = Dense(35, activation='relu')(encoded)
 
-    decoded = Dense(128, activation='relu')(encoded)
-    decoded = Dense(256, activation='relu')(decoded)
+    decoded = Dense(65, activation='relu')(encoded)
+    decoded = Dense(128, activation='relu')(decoded)
     decoded = Dense(units=num_neurons_output, activation="sigmoid")(decoded)
     autoencoder = Model(input_shape, decoded)
     autoencoder.summary()
@@ -179,15 +179,19 @@ har_PCA = cluster_PCA(har_data, har_labels, 6, 60)
 cnae_data_mm = MinMaxScaler().fit_transform(cnae_data)
 digit_data_mm = MinMaxScaler().fit_transform(digit_data)
 har_data_mm = MinMaxScaler().fit_transform(har_data)
+
+digit_results_mm = cluster_autoencoder(digit_data, digit_labels, 10,"MNIST digit",30)
+cnae_results_mm = cluster_autoencoder(cnae_data, cnae_labels, 9,"CNAE-9",30)
+har_results_mm = cluster_autoencoder(har_data, har_labels, 6,"Human activity",30)
 """
 cnae_none_mm = cluster_none(cnae_data_mm, cnae_labels, NUM_CNAE)
 har_none_mm = cluster_none(har_data_mm, har_labels, NUM_HAR)
 digit_none_mm = cluster_none(digit_data_mm, digit_labels, NUM_DIGIT)
-"""
+
 digit_simple_mm = cluster_autoencoder_simple(digit_data_mm, digit_labels, 10, "MNIST digit", 20)
 cnae_simple_mm = cluster_autoencoder_simple(cnae_data_mm, cnae_labels, 9, "CNAE-9", 20)
 har_simple_mm = cluster_autoencoder_simple(har_data_mm, har_labels, 6, "Human activity", 20)
-""""
+
 digit_PCA_mm = cluster_PCA(digit_data_mm, digit_labels, 10, 130)
 cnae_PCA_mm = cluster_PCA(cnae_data_mm, cnae_labels, 9, 250)
 har_PCA_mm = cluster_PCA(har_data_mm, har_labels, 6, 60)
@@ -215,9 +219,13 @@ print("CNAE with autoencoder", cnae_results)
 # print("HAR none mm", har_none_mm)
 # print("Digit none mm", digit_none_mm, '\n')
 
-print("CNAE simple mm", cnae_simple_mm)
-print("HAR simple mm", har_simple_mm)
-print("Digit simple mm", digit_simple_mm, '\n')
+#print("CNAE simple mm", cnae_simple_mm)
+#print("HAR simple mm", har_simple_mm)
+#print("Digit simple mm", digit_simple_mm, '\n')
+
+print("CNAE Deep mm", cnae_results_mm)
+print("HAR Deep mm", har_results_mm)
+print("Digit Deep mm", digit_results_mm, '\n')
 
 # print("CNAE with PCA MM", cnae_PCA_mm)  # 120- 30
 # print("HAR with PCA MM", har_PCA_mm)  # 230-50
