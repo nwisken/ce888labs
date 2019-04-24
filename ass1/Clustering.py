@@ -11,17 +11,17 @@ from sklearn.model_selection import train_test_split
 from keras.layers import Dense, Dropout, Conv2D, MaxPool2D, UpSampling2D, Activation, Conv1D, MaxPool1D, UpSampling1D
 from keras import backend as K
 from sklearn.preprocessing import MinMaxScaler
+from keras import regularizers
 
 
 def plot_history(history, title):
     """
     Plots the  training and validation accuracy and loss in two graphs
     :param history: History of classifier during training
+    :param title:  Title displayed at top graph
     """
     loss = history.history['loss']
     val_loss = history.history['val_loss']
-    # x = range(NUM_EPOCHS)
-
     plt.figure(figsize=(12, 5))
     plt.plot(loss, 'b', label='Training loss')
     plt.plot(val_loss, 'r', label='Validation loss')
@@ -33,35 +33,38 @@ def plot_history(history, title):
 def cluster_autoencoder(train_data, train_label, num_classes, title, num_epochs):
     batch_size = 128
     num_neurons_input = num_neurons_output = train_data.shape[1]  # number features
+    # splits data into training and validation data
     train_data, val_data, train_label, val_label = train_test_split(train_data, train_label, test_size=0.1,
                                                                     random_state=RANDOM_STATE)
 
     input_shape = Input(shape=(num_neurons_input,))
-    # Dense = NN network layer
     encoded = Dense(128, activation='relu')(input_shape)
     encoded = Dense(65, activation='relu')(encoded)
     encoded = Dense(35, activation='relu')(encoded)
+    encoded = Dense(num_classes, activation='linear', activity_regularizer=regularizers.l1(0.00001))(encoded)
 
-    decoded = Dense(65, activation='relu')(encoded)
+    decoded = Dense(35, activation='relu')(encoded)
+    decoded = Dense(65, activation='relu')(decoded)
     decoded = Dense(128, activation='relu')(decoded)
-    decoded = Dense(units=num_neurons_output, activation="sigmoid")(decoded)
+    decoded = Dense(units=num_neurons_output, activation="softmax")(decoded)
     autoencoder = Model(input_shape, decoded)
     autoencoder.summary()
 
-    autoencoder.compile(optimizer="adam", loss="binary_crossentropy")
+    autoencoder.compile(optimizer="adam", loss="mse")
     history = autoencoder.fit(train_data, train_data, batch_size=batch_size, epochs=num_epochs,
                               validation_data=(val_data, val_data), verbose=0)
     plot_history(history, title)
 
-    classifier = Dense(num_classes, activation="softmax")(encoded)
-    encoder = Model(input_shape, encoded)
+    # classifier = Dense(num_classes, activation="softmax")(encoded)
+    encoder = Model(input_shape, decoded)
     encoded_data = encoder.predict(train_data)
+    softmax_predictions = cluster_assignment(encoded_data)
 
-    cluster_preicdion = KMeans(n_clusters=num_classes, random_state=RANDOM_STATE).fit_predict(encoded_data)
+    cluster_prediction = KMeans(n_clusters=num_classes, random_state=RANDOM_STATE).fit_predict(softmax_predictions)
 
-    homo = homogeneity_score(train_label, cluster_preicdion)
-    comp = completeness_score(train_label, cluster_preicdion)
-    v = v_measure_score(train_label, cluster_preicdion)
+    homo = homogeneity_score(train_label, cluster_prediction)
+    comp = completeness_score(train_label, cluster_prediction)
+    v = v_measure_score(train_label, cluster_prediction)
 
     return "homo: {} comp: {} v-Measure: {} ".format(homo, comp, v)
 
@@ -81,21 +84,26 @@ def cluster_autoencoder_simple(train_data, train_label, num_classes, title, num_
     autoencoder = Model(input_shape, decoded)
     autoencoder.summary()
 
-    autoencoder.compile(optimizer="adam", loss="binary_crossentropy")
+    autoencoder.compile(optimizer="adam", loss="mse")
     history = autoencoder.fit(train_data, train_data, batch_size=batch_size, epochs=num_epochs,
-                              validation_data=(val_data, val_data), verbose=0, shuffle=True)
+                              validation_data=(val_data, val_data), verbose=0)
     plot_history(history, title)
 
     encoder = Model(input_shape, encoded)
     encoded_data = encoder.predict(train_data)
 
-    cluster_preicdion = KMeans(n_clusters=num_classes, random_state=RANDOM_STATE).fit_predict(encoded_data)
+    cluster_prediction = KMeans(n_clusters=num_classes, random_state=RANDOM_STATE).fit_predict(encoded_data)
 
-    homo = homogeneity_score(train_label, cluster_preicdion)
-    comp = completeness_score(train_label, cluster_preicdion)
-    v = v_measure_score(train_label, cluster_preicdion)
+    homo = homogeneity_score(train_label, cluster_prediction)
+    comp = completeness_score(train_label, cluster_prediction)
+    v = v_measure_score(train_label, cluster_prediction)
 
-    return "homo: {} comp: {} v-Measure: {} ".format(homo, comp, v)
+
+def cluster_assignment(encoded_data):
+    assignments = []
+    for data in encoded_data:
+        assignments.append([data.argmax()])
+    return assignments
 
 
 def cluster_none(train_data, train_labels, num_classes):
@@ -180,9 +188,9 @@ cnae_data_mm = MinMaxScaler().fit_transform(cnae_data)
 digit_data_mm = MinMaxScaler().fit_transform(digit_data)
 har_data_mm = MinMaxScaler().fit_transform(har_data)
 
-digit_results_mm = cluster_autoencoder(digit_data, digit_labels, 10,"MNIST digit",30)
-cnae_results_mm = cluster_autoencoder(cnae_data, cnae_labels, 9,"CNAE-9",30)
-har_results_mm = cluster_autoencoder(har_data, har_labels, 6,"Human activity",30)
+digit_results_mm = cluster_autoencoder(digit_data_mm, digit_labels, 10, "MNIST digit", 200)
+cnae_results_mm = cluster_autoencoder(cnae_data_mm, cnae_labels, 9, "CNAE-9", 200)
+har_results_mm = cluster_autoencoder(har_data_mm, har_labels, 6, "Human activity", 200)
 """
 cnae_none_mm = cluster_none(cnae_data_mm, cnae_labels, NUM_CNAE)
 har_none_mm = cluster_none(har_data_mm, har_labels, NUM_HAR)
@@ -219,9 +227,9 @@ print("CNAE with autoencoder", cnae_results)
 # print("HAR none mm", har_none_mm)
 # print("Digit none mm", digit_none_mm, '\n')
 
-#print("CNAE simple mm", cnae_simple_mm)
-#print("HAR simple mm", har_simple_mm)
-#print("Digit simple mm", digit_simple_mm, '\n')
+# print("CNAE simple mm", cnae_simple_mm)
+# print("HAR simple mm", har_simple_mm)
+# print("Digit simple mm", digit_simple_mm, '\n')
 
 print("CNAE Deep mm", cnae_results_mm)
 print("HAR Deep mm", har_results_mm)
