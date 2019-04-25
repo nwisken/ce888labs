@@ -1,6 +1,7 @@
 import pandas as pd
 import gc
 
+# filepaths of dataset
 CNAE_9_PATH = "CNAE_9.data"
 HAR_DATA_PATH = "HAR_data.txt"
 HAR_LABEL_PATH = "HAR_label.txt"
