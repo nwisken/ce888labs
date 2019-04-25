@@ -2,14 +2,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from keras import Input
-from keras.models import Model, Sequential
-from keras.utils import to_categorical
+from keras.models import Model
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 from sklearn.metrics import homogeneity_score, completeness_score, v_measure_score
 from sklearn.model_selection import train_test_split
-from keras.layers import Dense, Dropout, Conv2D, MaxPool2D, UpSampling2D, Activation, Conv1D, MaxPool1D, UpSampling1D
-from keras import backend as K
+from keras.layers import Dense
 from sklearn.preprocessing import MinMaxScaler
 from keras import regularizers
 
